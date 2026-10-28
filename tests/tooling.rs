@@ -1,8 +1,9 @@
 use eternalmac::tooling::brew::{install_cask_args, install_formula_args};
 use eternalmac::tooling::ssh::{
     batch_login_check_args, build_sync_destination, et_server_probe_args,
-    interactive_authorize_key_args, managed_identity_paths, port_probe_args,
-    render_managed_host_block, upsert_managed_host_block, validate_ssh_host, validate_ssh_user,
+    etterminal_path_probe_args, interactive_authorize_key_args, managed_identity_paths,
+    port_probe_args, render_managed_host_block, upsert_managed_host_block, validate_ssh_host,
+    validate_ssh_user,
 };
 use eternalmac::tooling::tailscale::{detect_variant, parse_status_json, Variant};
 use eternalmac::tooling::tmux::parse_sessions;
@@ -245,4 +246,17 @@ fn interactive_authorize_key_args_neutralize_injection_in_public_key() {
     assert!(remote_command.contains("'ssh-ed25519 AAAA'\\''; rm -rf ~ #'"));
     // The unescaped break-out fragment must never appear.
     assert!(!remote_command.contains("AAAA'; rm"));
+}
+
+#[test]
+fn etterminal_path_probe_runs_under_sh_so_non_posix_login_shells_can_parse_it() {
+    // ssh passes the command string to the remote login shell. The POSIX
+    // `if ...; then ...; fi` script is a syntax error in fish, so it must be
+    // wrapped in `sh -c` rather than sent bare.
+    let args = etterminal_path_probe_args("mac-mini.example.ts.net");
+    let remote_command = args.last().unwrap();
+
+    assert!(remote_command.starts_with("sh -c '"));
+    assert!(remote_command.contains("/opt/homebrew/bin/etterminal"));
+    assert!(remote_command.contains("command -v etterminal"));
 }

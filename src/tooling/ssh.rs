@@ -156,7 +156,9 @@ pub fn etterminal_path_probe_args(host: &str) -> Vec<String> {
         "-o".into(),
         "ConnectTimeout=5".into(),
         host.into(),
-        "if [ -x /opt/homebrew/bin/etterminal ]; then printf '%s\\n' /opt/homebrew/bin/etterminal; elif [ -x /usr/local/bin/etterminal ]; then printf '%s\\n' /usr/local/bin/etterminal; else command -v etterminal; fi".into(),
+        posix_remote_command(
+            "if [ -x /opt/homebrew/bin/etterminal ]; then printf '%s\\n' /opt/homebrew/bin/etterminal; elif [ -x /usr/local/bin/etterminal ]; then printf '%s\\n' /usr/local/bin/etterminal; else command -v etterminal; fi",
+        ),
     ]
 }
 
@@ -196,6 +198,13 @@ fn sanitize_for_filename(value: &str) -> String {
         .collect::<String>();
 
     sanitized.trim_matches('_').to_string()
+}
+
+/// Wraps a POSIX shell script so it runs under `sh` whatever the remote login
+/// shell is. ssh hands the command string to that shell, and fish (for one)
+/// cannot parse POSIX `if ...; then ...; fi`.
+fn posix_remote_command(script: &str) -> String {
+    format!("sh -c {}", quote_shell_arg(script))
 }
 
 fn quote_shell_arg(value: &str) -> String {

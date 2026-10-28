@@ -812,6 +812,7 @@ fn run_client_once_with_sync_status(status_line: &str) -> State {
                         .into(),
                 stderr: String::new(),
                 success: true,
+                exit_code: Some(0),
             },
         )
         .with_response(
@@ -823,6 +824,7 @@ fn run_client_once_with_sync_status(status_line: &str) -> State {
                 ),
                 stderr: String::new(),
                 success: true,
+                exit_code: Some(0),
             },
         );
 
